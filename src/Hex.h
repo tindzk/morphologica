@@ -58,22 +58,14 @@ namespace morph {
      *         *     *
      *         -g * -b
      *
+     *
+     * Note that I've designed this class with several public
+     * attributes, because this is research code, and accessing public
+     * members is fast (ok, just one less function call).
      */
     class Hex
     {
     public:
-        /*!
-         * Constructor taking index, dimension and integer position
-         * indices. Computes Cartesian location from these.
-         */
-        Hex (const unsigned int& idx, const float& d_,
-             const int& r_, const int& g_) {
-            this->vi = idx;
-            this->d = d_;
-            this->ri = r_;
-            this->gi = g_;
-            this->computeCartesian();
-        }
 
         /*!
          * Produce a string containing information about this hex,
@@ -113,42 +105,23 @@ namespace morph {
         }
 
         /*!
-         * Produce a string containing information about this hex,
-         * focussing on Cartesian position information.
+         * computeLocation interface. Will call either
+         * computeCartesian or computePolar.
          */
-        string outputCart (void) const {
-            string s("Hex ");
-            s += to_string(this->vi).substr(0,2) + " (";
-            s += to_string(this->ri).substr(0,4) + ",";
-            s += to_string(this->gi).substr(0,4) + ") is at (x,y) = ("
-                + to_string(this->x).substr(0,4) +"," + to_string(this->y).substr(0,4) + ")";
-            return s;
-        }
+        void computeLocation (void) = 0;
 
         /*!
-         * Convert ri, gi and bi indices into x and y coordinates
-         * based on the hex-to-hex distance d.
+         * Compute the distance from the centre of this Hex to the
+         * point given by point in the relevant coordinate system. In
+         * the HexCart class, this'll be x,y, in HexPolar, it'll be r,
+         * phi.
          */
-        void computeCartesian (void) {
-            this->x = this->d*this->ri + (d/2.0f)*this->gi - (d/2.0f)*this->bi;
-            float dv = (this->d*morph::SQRT_OF_3_F)/2.0f;
-            this->y = dv*this->gi + dv*this->bi;
-        }
+        float distanceFrom (const pair<float, float> point) const = 0;
 
-        float distanceFrom (const pair<float, float> cartesianPoint) const {
-            float dx = abs(cartesianPoint.first - x);
-            float dy = abs(cartesianPoint.second - y);
-            float d = sqrt (dx*dx + dy*dy);
-            //cout << "distance: " << d << endl;
-            return d;
-        }
-
-        float distanceFrom (const BezCoord& cartesianPoint) const {
-            float dx = abs(cartesianPoint.x() - x);
-            float dy = abs(cartesianPoint.y() - y);
-            float d = sqrt (dx*dx + dy*dy);
-            return d;
-        }
+        /*!
+         * Compute the distance from the BezCoord cartesianPoint.
+         */
+        float distanceFrom (const BezCoord& cartesianPoint) const = 0;
 
         /*!
          * Vector index. This is the index into those data vectors
@@ -160,15 +133,6 @@ namespace morph {
          * elements and then pruning down.
          */
         unsigned int vi;
-
-        /*!
-         * Cartesian coordinates of the centre of the Hex.
-         */
-        //@{
-        float x = 0.0f;
-        float y = 0.0f;
-        float z = 0.0f;
-        //@}
 
         /*!
          * Get the Cartesian position of this Hex as a fixed size array.
@@ -185,14 +149,23 @@ namespace morph {
         float d = 1.0f;
 
         /*!
-         * A getter for d, for completeness
+         * The z position of the Hex. This is common to both Cartesian
+         * and Polar coordinate systems, and can be used to identify
+         * layers.
+         */
+        float z = 0.0f;
+
+        /*!
+         * A getter for d, for completeness, although d is public.
          */
         float getD (void) {
             return this->d;
         }
 
         /*!
-         * Get the shortest distance from the centre to the perimeter
+         * Get the shortest distance from the centre to the
+         * perimeter. To be refactored so that getR can return the
+         * position r in an r,phi polar coord system.
          */
         float getR (void) {
             return this->d/2;
@@ -223,6 +196,23 @@ namespace morph {
             float tdv = (this->d*morph::SQRT_OF_3_F);
             return tdv;
         }
+
+        /*!
+         * Get Cartesian x and y.
+         */
+        float getX (void) const = 0;
+        float getY (void) const = 0;
+
+        /*!
+         * Get Polar r, and phi
+         */
+        float getRR (void) const = 0;
+        float getPhi (void) const = 0;
+
+        /*!
+         * getter for z, for completeness.
+         */
+        float getZ (void) { return this->z; }
 
         /*!
          * Indices in hex directions. These lie in the x-y
@@ -428,7 +418,92 @@ namespace morph {
         //@}
 
         //@}
-    };
+
+    }; // class Hex
+
+
+    class HexCart : Hex
+    {
+        HexCart (const unsigned int& idx, const float& d_,
+                 const int& r_, const int& g_)
+            : vi(idx)
+            , d(d_)
+            , ri(r_)
+            , gi(g_) {
+            this->computeCartesian();
+        }
+
+        /*!
+         * Produce a string containing information about this hex,
+         * focussing on Cartesian position information.
+         */
+        string outputCart (void) const {
+            string s("Hex ");
+            s += to_string(this->vi).substr(0,2) + " (";
+            s += to_string(this->ri).substr(0,4) + ",";
+            s += to_string(this->gi).substr(0,4) + ") is at (x,y) = ("
+                + to_string(this->x).substr(0,4) +"," + to_string(this->y).substr(0,4) + ")";
+            return s;
+        }
+
+        /*!
+         * Convert ri, gi and bi indices into x and y coordinates
+         * based on the hex-to-hex distance d.
+         */
+        void computeCartesian (void) {
+            this->x = this->d*this->ri + (d/2.0f)*this->gi - (d/2.0f)*this->bi;
+            float dv = (this->d*morph::SQRT_OF_3_F)/2.0f;
+            this->y = dv*this->gi + dv*this->bi;
+        }
+
+        /*!
+         * Compute distance from the Cartesian point (x,y) to this
+         * Hex's centre.
+         */
+        float distanceFrom (const pair<float, float> cartesianPoint) const {
+            float dx = abs(cartesianPoint.first - x);
+            float dy = abs(cartesianPoint.second - y);
+            float d = sqrt (dx*dx + dy*dy);
+            return d;
+        }
+
+        /*!
+         * A version of distanceFrom which uses the BezCoord
+         * @a cartesianPoint.
+         */
+        float distanceFrom (const BezCoord& cartesianPoint) const {
+            float dx = abs(cartesianPoint.x() - x);
+            float dy = abs(cartesianPoint.y() - y);
+            float d = sqrt (dx*dx + dy*dy);
+            return d;
+        }
+
+        /*!
+         * Direct getters for x and y coordinates.
+         */
+        //@{
+        float getX (void) const { return this->x; }
+        float getY (void) const { return this->y; }
+        //@}
+
+        /*!
+         * When storing x and y, we have to compute r and phi.
+         */
+        //@{
+        float getRR (void) const { return sqrt (x*x + y*y); }
+        float getPhi (void) const { return atan2 (y, x); }
+        //@}
+
+        /*!
+         * Cartesian coordinates of the centre of the Hex in two
+         * dimensions.
+         */
+        //@{
+        float x = 0.0f;
+        float y = 0.0f;
+        //@}
+
+    }; // class HexCart
 
 } // namespace morph
 

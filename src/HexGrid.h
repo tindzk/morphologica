@@ -111,6 +111,10 @@ namespace morph {
 
         /*!
          * The list of hexes that make up this HexGrid.
+         *
+         * In order to work with either HexCart or HexPolar members of
+         * this list, I think we may need to write a custom iterator
+         * class (or rather, extend the iterator from std).
          */
         list<Hex> hexen;
 
