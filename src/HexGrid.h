@@ -389,6 +389,20 @@ namespace morph {
         bool findBoundaryHex (list<Hex>::const_iterator& hi) const;
 
         /*!
+         * Recursive subroutines used by markHexesInside. Shouldn't
+         * hit stack limits with these as the recursion is in one
+         * direction only.
+         */
+        //@{
+        void MHI_traverseNE (list<Hex>::iterator hi);
+        void MHI_traverseSW (list<Hex>::iterator hi);
+        void MHI_traverseNW (list<Hex>::iterator hi);
+        void MHI_traverseSE (list<Hex>::iterator hi);
+        //@}
+
+        unsigned long long int traverseCalls = 0;
+
+        /*!
          * Recursively mark hexes to be kept if they are inside the
          * boundary.
          */

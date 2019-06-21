@@ -19,7 +19,7 @@
 #include "BezCoord.h"
 
 #define DBGSTREAM std::cout
-//#define DEBUG 1
+#define DEBUG 1
 //#define DEBUG2 1
 #include "MorphDbg.h"
 
@@ -442,153 +442,104 @@ morph::HexGrid::boundaryContiguous (list<Hex>::const_iterator bhi, list<Hex>::co
 }
 
 void
+morph::HexGrid::MHI_traverseSW (list<Hex>::iterator hi)
+{
+    ++traverseCalls;
+    DBG2 ("Called for hex " << hi->outputRGB()
+          << ", boundaryHex? " << (hi->boundaryHex?"yes":"no")
+          << ", inside? " << (hi->insideBoundary?"yes":"no"));
+    // Go from centre hex and traverse down in the -g direction (sw)
+    // until the boundary is found.
+    while (hi->boundaryHex == false) {
+        hi->insideBoundary = true;
+        // If, as we go south west, there's a hex to the west,
+        // recursively call into that with all four MHI_traverse*
+        // functions.
+        if (hi->has_nw && hi->nw->insideBoundary == false) {
+            DBG2 ("Recurse, has non-inside neighbour west which is " << hi->nw->outputRGB());
+            this->MHI_traverseSW (hi->nw);
+            this->MHI_traverseNE (hi->nw);
+            //this->MHI_traverseSE (hi->nw);
+            this->MHI_traverseNW (hi->nw);
+        }
+        if (hi->has_nsw) {
+            DBG2 ("Step to hex south west which is " << hi->nsw->outputRGB());
+            hi = hi->nsw;
+        }
+    }
+    DBG2 ("Return for " << hi->outputRGB());
+}
+
+void
+morph::HexGrid::MHI_traverseNE (list<Hex>::iterator hi)
+{
+    ++traverseCalls;
+    while (hi->boundaryHex == false) {
+        hi->insideBoundary = true;
+        if (hi->has_ne && hi->ne->insideBoundary == false) {
+            this->MHI_traverseNE (hi->ne);
+            //this->MHI_traverseSW (hi->ne);
+            this->MHI_traverseNW (hi->ne);
+            this->MHI_traverseSE (hi->ne);
+        }
+        if (hi->has_nne) {
+            hi = hi->nne;
+        }
+    }
+}
+
+void
+morph::HexGrid::MHI_traverseNW (list<Hex>::iterator hi)
+{
+    ++traverseCalls;
+    while (hi->boundaryHex == false) {
+        hi->insideBoundary = true;
+        if (hi->has_nw && hi->nw->insideBoundary == false) {
+            this->MHI_traverseNW (hi->nw);
+            //this->MHI_traverseSE (hi->nw);
+            this->MHI_traverseNE (hi->nw);
+            this->MHI_traverseSW (hi->nw);
+        }
+        if (hi->has_nnw) {
+            hi = hi->nnw;
+        }
+    }
+}
+
+void
+morph::HexGrid::MHI_traverseSE (list<Hex>::iterator hi)
+{
+    ++traverseCalls;
+    while (hi->boundaryHex == false) {
+        hi->insideBoundary = true;
+        if (hi->has_ne && hi->ne->insideBoundary == false) {
+            this->MHI_traverseSE (hi->ne);
+            //this->MHI_traverseNW (hi->ne);
+            this->MHI_traverseSW (hi->ne);
+            this->MHI_traverseNE (hi->ne);
+        }
+        if (hi->has_nse) {
+            hi = hi->nse;
+        }
+    }
+}
+
+void
 morph::HexGrid::markHexesInside (list<Hex>::iterator centre_hi)
 {
-    // Starting from hi, which is going to be the hex closest to the
-    // centroid of the boundary, run up and down hex rows
-    // systematically until boundary hexes are found.
-
-    // Find the west-most hex on this row of hexes
-    list<Hex>::iterator hexcol_west = centre_hi;
-    while (hexcol_west->boundaryHex == false) {
-        if (hexcol_west->has_nw) {
-            hexcol_west = hexcol_west->nw;
-            hexcol_west->insideBoundary = hexcol_west->boundaryHex;
-        } else {
-            // no further neighbour to the west
-            if (hexcol_west->boundaryHex == false) {
-                cerr << "WARNING: Got to (west) edge of region without encountering a boundary Hex.\n";
-                break;
-            }
-        }
-    }
-
-    // Find the south-most hex on this row of hexes
-    list<Hex>::iterator hexcol_south = centre_hi;
-    while (hexcol_south->boundaryHex == false) {
-        if (hexcol_south->has_nsw) {
-            hexcol_south = hexcol_south->nsw;
-            hexcol_south->insideBoundary = hexcol_south->boundaryHex;
-        } else {
-            // no neighbour to the south
-            if (hexcol_south->boundaryHex == false) {
-                cerr << "WARNING: Got to (south) edge of region without encountering a boundary Hex.\n";
-                break;
-            }
-        }
-    }
-
-    // Temporary hex iterator used in the while loops below
-    list<Hex>::iterator hi;
-
-    // Traverse from west to east
-    list<Hex>::iterator hexcol = hexcol_west->ne;
-    while (hexcol->boundaryHex == false) {
-
-        // Traverse up and down in the 'g' direction (sw to ne)
-        hi = hexcol;
-        // Go from centre hex and traverse up in the g direction (ne)
-        // until the boundary is found.
-        while (hi->boundaryHex == false) {
-            hi->insideBoundary = true;
-            if (hi->has_nne) {
-                // boundary hexes themselves are inside the boundary:
-                hi = hi->nne;
-            }
-        }
-        // Now traverse in the -g direction (sw)
-        hi = hexcol;
-        while (hi->boundaryHex == false) {
-            hi->insideBoundary = true;
-            if (hi->has_nsw) {
-                hi = hi->nsw;
-            }
-        }
-
-        // Now traverse up and down in the 'b' direction (nw and se)
-        hi = hexcol;
-        // Go from centre hex and traverse up in the b direction (nw)
-        // until the boundary is found.
-        while (hi->boundaryHex == false) {
-            hi->insideBoundary = true;
-            if (hi->has_nnw) {
-                hi = hi->nnw;
-            }
-        }
-        // Now traverse in the -b direction (se)
-        hi = hexcol;
-        while (hi->boundaryHex == false) {
-            hi->insideBoundary = true;
-            if (hi->has_nse) {
-                hi = hi->nse;
-            }
-        }
-
-        // Step east before moving to the next loop in the while
-        if (hexcol->has_ne) {
-            hexcol = hexcol->ne;
-        } else {
-            // No neighbour east
-            if (hexcol->boundaryHex == false) {
-                cerr << "WARNING: Got to (east) edge of region without encountering a boundary Hex.\n";
-                break;
-            }
-        }
-    }
-
-    // Repeat traverse from south to north
-    hexcol = hexcol_south->nne;
-    while (hexcol->boundaryHex == false) {
-
-        // Traverse up and down in the 'b' direction (nw and se)
-        hi = hexcol;
-        // Go from centre hex and traverse up in the b direction (nw)
-        // until the boundary is found.
-        while (hi->boundaryHex == false) {
-            hi->insideBoundary = true;
-            if (hi->has_nnw) {
-                hi = hi->nnw;
-            }
-        }
-        // Now traverse in the -b direction (se)
-        hi = hexcol;
-        while (hi->boundaryHex == false) {
-            hi->insideBoundary = true;
-            if (hi->has_nse) {
-                hi = hi->nse;
-            }
-        }
-
-        // Now traverse left and right in the 'r' direction (w and e)
-        hi = hexcol;
-        // Go from centre hex and traverse up in the b direction (nw)
-        // until the boundary is found.
-        while (hi->boundaryHex == false) {
-            hi->insideBoundary = true;
-            if (hi->has_nw) {
-                hi = hi->nw;
-            }
-        }
-        // Now traverse in the -b direction (e)
-        hi = hexcol;
-        while (hi->boundaryHex == false) {
-            hi->insideBoundary = true;
-            if (hi->has_ne) {
-                hi = hi->ne;
-            }
-        }
-
-        // Step north-east before moving to the next loop in the while
-        if (hexcol->has_nne) {
-            hexcol = hexcol->nne;
-        } else {
-            // No neighbour north-east
-            if (hexcol->boundaryHex == false) {
-                cerr << "WARNING: Got to (north-east) edge of region without encountering a boundary Hex.\n";
-                break;
-            }
-        }
-    }
+    // Traverse up and down in the 'g' direction (sw to ne)
+    this->MHI_traverseSW (centre_hi);
+    cout << "traverse calls SW" << traverseCalls << endl;
+    traverseCalls = 0;
+    this->MHI_traverseNE (centre_hi);
+    cout << "traverse calls NE" << traverseCalls << endl;
+    traverseCalls = 0;
+    // Now traverse up and down in the 'b' direction (nw and se)
+    this->MHI_traverseNW (centre_hi);
+    cout << "traverse calls NW" << traverseCalls << endl;
+    traverseCalls = 0;
+    this->MHI_traverseSE (centre_hi);
+    cout << "traverse calls SE" << traverseCalls << endl;
 }
 
 void

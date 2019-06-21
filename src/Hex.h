@@ -145,6 +145,23 @@ namespace morph {
             return s;
         }
 
+        string outputRG (void) const {
+            string s("vi: ");
+            s += to_string(this->vi).substr(0,2) + " (";
+            s += to_string(this->ri).substr(0,4) + ",";
+            s += to_string(this->gi).substr(0,4) + ")";
+            return s;
+        }
+
+        string outputRGB (void) const {
+            string s("vi: ");
+            s += to_string(this->vi).substr(0,2) + " (";
+            s += to_string(this->ri).substr(0,4) + ",";
+            s += to_string(this->gi).substr(0,4) + ",";
+            s += to_string(this->bi).substr(0,4) + ")";
+            return s;
+        }
+
 #ifdef UNTESTED_UNUSED
         /*!
          * Change this Hex's position in space. Subtract
