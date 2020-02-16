@@ -6,28 +6,19 @@ ENV LANG=C.UTF-8
 RUN apk update && apk upgrade && apk --no-cache add \
   bash \
   build-base \
-  ca-certificates \
   clang-dev \
-  clang \
   cmake \
   coreutils \
-  curl \
   freetype-dev \
   git \
   gettext \
-  lcms2-dev \
-  libavc1394-dev \
   libc-dev \
   libffi-dev \
-  libjpeg-turbo-dev \
   libpng-dev \
-  libwebp-dev \
   linux-headers \
   make \
   musl \
-  openblas \
   openblas-dev \
-  openjpeg-dev \
   tiff-dev \
   unzip \
   zlib-dev \
