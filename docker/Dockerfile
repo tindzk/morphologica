@@ -45,7 +45,7 @@ RUN cd /opt && \
   cd armadillo-9.850.1 && \
   mkdir build && \
   cd build && \
-  cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && \
+  cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_INSTALL_LIBDIR=/usr/local/lib && \
   make -j$(nproc) && \
   make install && \
   rm -rf /opt/armadillo-9.850.1
