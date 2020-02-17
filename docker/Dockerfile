@@ -68,11 +68,11 @@ RUN cd /opt && \
   git checkout 3beb37ea14aec1bdce1a6d542dc464d00f4a6cec && \
   mkdir build && \
   cd build && \
-  cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && \
+  # /usr/local/lib/ is hard-coded in morphologica (src/CMakeLists.txt)
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_INSTALL_LIBDIR=/usr/local/lib && \
   make -j$(nproc) && \
   make install && \
-  rm -rf /opt/jsoncpp && \
-  cp -rv /usr/local/lib64/* /usr/local/lib/  # /usr/loca/lib/ is hard-coded in morphologica (src/CMakeLists.txt)
+  rm -rf /opt/jsoncpp
 
 RUN cd /opt && \
   git clone https://github.com/ABRG-Models/morphologica.git && \
@@ -83,4 +83,5 @@ RUN cd /opt && \
   make -j$(nproc) && \
   #ctest && \
   make install && \
-  rm -rf /opt/morphologica
+  rm -rf /opt/morphologica && \
+  ldconfig
