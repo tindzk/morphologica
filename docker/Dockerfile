@@ -28,14 +28,16 @@ RUN apk update && apk upgrade && apk --no-cache add \
 RUN cd /opt && \
   wget https://github.com/opencv/opencv/archive/3.2.0.zip && \
   unzip 3.2.0.zip && rm 3.2.0.zip && \
-  cd /opt/opencv-3.2.0 && mkdir build && cd build && \
+  cd opencv-3.2.0 && mkdir build && cd build && \
   cmake -D CMAKE_BUILD_TYPE=RELEASE \
     -D CMAKE_C_COMPILER=/usr/bin/clang \
     -D CMAKE_CXX_COMPILER=/usr/bin/clang++ \
     -D CMAKE_INSTALL_PREFIX=/usr/local \
     -D INSTALL_C_EXAMPLES=OFF \
     .. && \
-  make -j$(nproc) && make install && cd .. && rm -rf build
+  make -j$(nproc) && \
+  make install && \
+  rm -rf /opt/opencv-3.2.0
 
 RUN cd /opt && \
   wget https://downloads.sourceforge.net/project/arma/armadillo-9.850.1.tar.xz && \
@@ -46,7 +48,8 @@ RUN cd /opt && \
   cd build && \
   cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && \
   make -j$(nproc) && \
-  make install
+  make install && \
+  rm -rf /opt/armadillo-9.850.1
 
 RUN cd /opt && \
   wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.6/src/hdf5-1.10.6.tar.gz && \
@@ -56,7 +59,8 @@ RUN cd /opt && \
   cd build && \
   cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && \
   make -j$(nproc) && \
-  make install
+  make install && \
+  rm -rf /opt/hdf5-1.10.6
 
 RUN cd /opt && \
   git clone https://github.com/open-source-parsers/jsoncpp.git && \
@@ -67,6 +71,7 @@ RUN cd /opt && \
   cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && \
   make -j$(nproc) && \
   make install && \
+  rm -rf /opt/jsoncpp && \
   cp -rv /usr/local/lib64/* /usr/local/lib/  # /usr/loca/lib/ is hard-coded in morphologica (src/CMakeLists.txt)
 
 RUN cd /opt && \
@@ -77,4 +82,5 @@ RUN cd /opt && \
   cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && \
   make -j$(nproc) && \
   #ctest && \
-  make install
+  make install && \
+  rm -rf /opt/morphologica
