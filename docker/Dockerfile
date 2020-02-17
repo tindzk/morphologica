@@ -18,8 +18,7 @@ RUN apk update && apk upgrade && apk --no-cache add \
   linux-headers \
   make \
   musl \
-  openblas-dev \
-  tiff-dev \
+  lapack-dev \
   unzip \
   zlib-dev \
   freeglut-dev \
