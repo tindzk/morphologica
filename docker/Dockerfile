@@ -59,6 +59,7 @@ RUN cd /opt && \
   cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && \
   make -j$(nproc) && \
   make install && \
+  cp /usr/local/lib/pkgconfig/hdf5-1.10.6.pc /usr/local/lib/pkgconfig/hdf5.pc && \
   rm -rf /opt/hdf5-1.10.6
 
 RUN cd /opt && \
