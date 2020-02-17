@@ -83,5 +83,4 @@ RUN cd /opt && \
   make -j$(nproc) && \
   #ctest && \
   make install && \
-  rm -rf /opt/morphologica && \
-  ldconfig
+  rm -rf /opt/morphologica
